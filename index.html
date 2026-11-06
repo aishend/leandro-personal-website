@@ -45,6 +45,7 @@
   }
   </script>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://api.open-meteo.com" crossorigin />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
@@ -124,9 +125,11 @@
       pointer-events: none;
     }
     #bBase  { color: var(--ascii); }
-    #bHi    { position: absolute; inset: 0; color: var(--ascii-hi); }
     #bLight { position: absolute; inset: 0; color: var(--amber); text-shadow: 0 0 6px rgba(227,181,79,.5); }
 
+    .hero-top { position: absolute; top: 84px; left: 0; right: 0; z-index: 1; }
+    .hero-top .wrap { display: flex; justify-content: space-between; gap: 16px; }
+    #clock { color: var(--fg); font-variant-numeric: tabular-nums; }
     .hero-text {
       position: absolute; left: 0; right: 0; bottom: 48px;
     }
@@ -193,6 +196,10 @@
         -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, #000 55%, transparent 100%);
                 mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, #000 55%, transparent 100%);
       }
+      .hero { display: flex; flex-direction: column; }
+      .hero-top { position: relative; top: auto; order: -1; padding-top: 18px; }
+      .hero-top .wrap { white-space: nowrap; }
+      .hero-top .place { display: none; }
       .hero-text { position: relative; bottom: auto; padding: 8px 0 8px; }
       .overview { padding-top: 56px; }
     }
@@ -219,8 +226,13 @@
     <div class="scene" id="scene">
       <div class="stack">
         <pre id="bBase" aria-hidden="true"></pre>
-        <pre id="bHi" aria-hidden="true"></pre>
         <pre id="bLight" aria-hidden="true"></pre>
+      </div>
+    </div>
+    <div class="hero-top">
+      <div class="wrap label">
+        <span class="place">Porto, Portugal</span>
+        <span><span id="clock">--:--:--</span><span id="wx"></span></span>
       </div>
     </div>
     <div class="hero-text">
@@ -296,12 +308,11 @@
     /* =====================================================
        Hero: Ponte Luís I em ASCII
        ===================================================== */
-    const sceneEl = $("scene"), bBase = $("bBase"), bHi = $("bHi"), bLight = $("bLight");
+    const sceneEl = $("scene"), bBase = $("bBase"), bLight = $("bLight");
     let W = 0, H = 0, fs = 10, cw = 6, lh = 10;
     let grid = [], kind = [], win = [];    // static scene
     let order = [];                       // reveal delay per cell
     let t0 = performance.now();
-    let mx = -999, my = -999;
 
     const WATER = 0.80, DECK = 0.25, LOW = 0.70;
     const XL = 0.24, XR = 0.76;
@@ -315,7 +326,7 @@
       const box = sceneEl.getBoundingClientRect();
       const targetCols = innerWidth < 760 ? 84 : 170;
       fs = Math.max(5, Math.min(11, (box.width * 0.98) / (targetCols * 0.6)));
-      [bBase, bHi, bLight].forEach(p => { p.style.fontSize = fs + "px"; p.style.lineHeight = fs + "px"; });
+      [bBase, bLight].forEach(p => { p.style.fontSize = fs + "px"; p.style.lineHeight = fs + "px"; });
       const probe = document.createElement("span");
       probe.textContent = "M".repeat(50);
       bBase.textContent = ""; bBase.appendChild(probe);
@@ -406,16 +417,35 @@
 
     const glyphs = "/\\|=-+_:.#";
 
+    // metros (linha D) on the upper deck: random, both directions, two tracks
+    const TRAM = 14;
+    let trams = [], lastT = 0, nextSpawn = 0;
+    const tramChar = j => j === 0 ? "[" : j === TRAM - 1 ? "]" : j % 7 === 0 ? "|" : "=";
+
+    function updateTrams(t) {
+      const dt = Math.min(0.2, t - lastT); lastT = t;
+      for (const m of trams) m.x += m.dir * m.speed * dt;
+      trams = trams.filter(m => m.x > -TRAM - 2 && m.x < W + 2);
+      if (t >= nextSpawn) {
+        const dir = Math.random() < 0.5 ? 1 : -1;
+        const start = dir === 1 ? -TRAM : W;
+        // don't spawn on top of another metro going the same way
+        const clear = trams.every(m => m.dir !== dir || Math.abs(m.x - start) > TRAM * 3);
+        if (clear && trams.length < 3) {
+          trams.push({ x: start, dir, speed: W / (9 + Math.random() * 5) });
+        }
+        nextSpawn = t + 2 + Math.random() * 6;
+      }
+    }
+
     function frame(now) {
       const t = now / 1000, el = reduce ? 1e9 : now - t0;
-      const lensR = 11;
       const deckRow = Math.round(DECK * H - 0.5) - 1;
-      // metro (linha D) crossing the upper deck
-      const tramLen = 14, period = 16;
-      const tp = ((t % period) / period) * (W + tramLen * 2) - tramLen;
-      const tramX = Math.floor(tp);
+      if (!reduce) updateTrams(t);
+      // eastbound on the near track, westbound on the far one, so they pass each other
+      const track = dir => dir === 1 ? deckRow : deckRow - 1;
 
-      let base = "", hi = "", lit = "";
+      let base = "", lit = "";
       for (let y = 0; y < H; y++) {
         for (let x = 0; x < W; x++) {
           const i = y * W + x;
@@ -431,38 +461,58 @@
           } else if (k === 0 && c === ".") {
             c = Math.sin(t * 0.8 + hash(x, y) * 60) > 0.2 ? "." : " ";
           }
+          if (rain > 0 && k === 0 && c === " " && hash(x, Math.floor(y - t * 22)) < rain) c = "|";
 
           if (el < order[i]) {
             c = c !== " " || hash(x, y + Math.floor(now / 90)) < 0.05 ? (el > order[i] - 500 ? glyphs[(hash(x, y + Math.floor(now / 70)) * glyphs.length) | 0] : " ") : " ";
           }
 
-          // lights: windows + tram
+          // lights: windows + metros
           let L = " ";
           if (el >= order[i]) {
             if (win[i] > 0.82 && Math.sin(t * 0.3 + win[i] * 40) > -0.3) L = c;
-            if (y === deckRow && x >= tramX && x < tramX + tramLen) {
-              const j = x - tramX;
-              L = j === 0 ? "[" : j === tramLen - 1 ? "]" : j % 7 === 0 ? "|" : "=";
+            for (const m of trams) {
+              const j = x - Math.floor(m.x);
+              if (y === track(m.dir) && j >= 0 && j < TRAM) L = tramChar(j);
             }
           }
 
-          const dx = (x - mx) * cw, dy = (y - my) * lh;
-          const inLens = dx * dx + dy * dy < (lensR * cw * 2) ** 2;
-
-          if (L !== " ") { base += " "; hi += " "; lit += L; }
-          else if (inLens && c !== " ") { base += " "; hi += c; lit += " "; }
-          else { base += c; hi += " "; lit += " "; }
+          if (L !== " ") { base += " "; lit += L; }
+          else { base += c; lit += " "; }
         }
-        base += "\n"; hi += "\n"; lit += "\n";
+        base += "\n"; lit += "\n";
       }
-      bBase.textContent = base; bHi.textContent = hi; bLight.textContent = lit;
+      bBase.textContent = base; bLight.textContent = lit;
     }
 
-    sceneEl.parentElement.addEventListener("pointermove", e => {
-      const r = bBase.getBoundingClientRect();
-      mx = (e.clientX - r.left) / cw; my = (e.clientY - r.top) / lh;
-    });
-    sceneEl.parentElement.addEventListener("pointerleave", () => { mx = my = -999; });
+    /* =====================================================
+       Hora e tempo no Porto
+       ===================================================== */
+    let rain = 0;   // rain density in the sky, set from the weather
+    const clockEl = $("clock"), wxEl = $("wx");
+    const fmt = new Intl.DateTimeFormat("pt-PT", { timeZone: "Europe/Lisbon", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+    const tick = () => clockEl.textContent = fmt.format(new Date());
+    tick(); setInterval(tick, 1000);
+
+    const WX = {
+      0: "Céu limpo", 1: "Pouco nublado", 2: "Parcialmente nublado", 3: "Nublado",
+      45: "Nevoeiro", 48: "Nevoeiro",
+      51: "Chuvisco", 53: "Chuvisco", 55: "Chuvisco forte", 56: "Chuvisco gelado", 57: "Chuvisco gelado",
+      61: "Chuva fraca", 63: "Chuva", 65: "Chuva forte", 66: "Chuva gelada", 67: "Chuva gelada",
+      71: "Neve", 73: "Neve", 75: "Neve forte", 77: "Neve",
+      80: "Aguaceiros", 81: "Aguaceiros", 82: "Aguaceiros fortes", 85: "Aguaceiros de neve", 86: "Aguaceiros de neve",
+      95: "Trovoada", 96: "Trovoada com granizo", 99: "Trovoada com granizo",
+    };
+    const RAIN = { 51: .004, 53: .006, 55: .008, 61: .008, 63: .014, 65: .022, 80: .01, 81: .016, 82: .024, 95: .02, 96: .022, 99: .024 };
+    async function weather() {
+      try {
+        const r = await fetch("https://api.open-meteo.com/v1/forecast?latitude=41.1496&longitude=-8.611&current=temperature_2m,weather_code&timezone=Europe%2FLisbon");
+        const { current: c } = await r.json();
+        wxEl.textContent = ` · ${Math.round(c.temperature_2m)}°C · ${WX[c.weather_code] ?? ""}`;
+        rain = reduce ? 0 : (RAIN[c.weather_code] || 0);
+      } catch (e) { wxEl.textContent = ""; }
+    }
+    weather(); setInterval(weather, 15 * 60 * 1000);
 
     /* =====================================================
        Small figures
