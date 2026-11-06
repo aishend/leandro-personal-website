@@ -156,7 +156,7 @@
       pointer-events: none;
     }
     #bBase  { color: var(--ascii); }
-    #bBoat  { position: absolute; inset: 0; color: #7d8083; }
+    #bBoat  { position: absolute; inset: 0; color: #9a9d9f; }
     #bLight { position: absolute; inset: 0; color: var(--amber); text-shadow: 0 0 6px rgba(227,181,79,.5); }
 
     .hero-top { position: absolute; top: 84px; left: 0; right: 0; z-index: 1; }
@@ -528,18 +528,28 @@
     }
 
     // barcos rabelos on the Douro: slow, fade in and out, both directions
+    // barco rabelo, facing right: square sail, wine barrels on deck,
+    // raised stern platform and the long steering oar going into the water
     const RABELO = [
-      "        |         ",
-      "     .--+--.      ",
-      "    (       )     ",
-      "    (       )     ",
-      "     '--+--'      ",
-      "=-._____|______.-'",
+      "                |          ",
+      "          ._____|_____.    ",
+      "          |           |    ",
+      "          |           |    ",
+      "          |           |    ",
+      "          '-----+-----'    ",
+      "    __._        |          ",
+      "   /|  |o_o_o_o_|_o_o_o_o__",
+      "  / \\                     /",
+      " /   \\___________________/ ",
     ];
     const RABELO_S = [
-      "   _|_    ",
-      "  (   )   ",
-      "=._|___.-'",
+      "      |     ",
+      "   .--+--.  ",
+      "   |     |  ",
+      "   '--+--'  ",
+      "  _.  |     ",
+      " /|_o_|_o_o_",
+      "/ \\________/",
     ];
     const MIRROR = { "/": "\\", "\\": "/", "(": ")", ")": "(" };
     const flip = rows => rows.map(r => [...r].reverse().map(c => MIRROR[c] || c).join(""));
@@ -549,7 +559,7 @@
       for (const b of boats) b.x += b.dir * b.speed * dt;
       boats = boats.filter(b => b.dir === 1 ? b.x < b.end : b.x > b.end);
       if (t >= nextBoat && boats.length < 2) {
-        const lanes = H > 50 ? [0, 1] : [0];
+        const lanes = H > 60 ? [0, 1] : [0];
         const free = lanes.filter(l => !boats.some(b => b.lane === l));
         if (free.length) {
           const lane = free[(Math.random() * free.length) | 0];
@@ -572,15 +582,17 @@
     function boatCells(t) {
       const cells = new Map();
       const waterRow = Math.ceil(WATER * H);
-      for (const b of boats) {
+      // far lane first so the closer boat is drawn on top
+      for (const b of [...boats].sort((a, c) => a.lane - c.lane)) {
         const p = Math.abs(b.x - b.start) / Math.abs(b.end - b.start);
         const alpha = Math.min(1, p / 0.18, (1 - p) / 0.18);       // fade in / fade out
-        const hull = Math.min(H - 1, waterRow + 1 + b.lane * 4);
+        const hull = Math.min(H - 1, waterRow + b.lane * 3);
         const top = hull - b.sprite.length + 1;
         const bx = Math.floor(b.x);
         b.sprite.forEach((row, ry) => {
-          for (let cx = 0; cx < row.length; cx++) {
-            if (row[cx] === " ") continue;
+          // fill between the outer edges so the sail and hull hide what's behind them
+          const from = row.search(/\S/), to = row.trimEnd().length;
+          for (let cx = Math.max(0, from); cx < to; cx++) {
             const x = bx + cx, y = top + ry;
             if (x < 0 || x >= W || y < 0 || y >= H) continue;
             if (hash(x * 3 + ry, Math.floor(t * 6)) < alpha) cells.set(y * W + x, row[cx]);
@@ -641,7 +653,7 @@
 
           const B = el >= order[i] ? BC.get(i) : undefined;
           if (L !== " ") { base += " "; boat += " "; lit += L; }
-          else if (B) { base += " "; boat += B; lit += " "; }
+          else if (B !== undefined) { base += " "; boat += B; lit += " "; }
           else { base += c; boat += " "; lit += " "; }
         }
         base += "\n"; lit += "\n"; boat += "\n";
