@@ -7,4 +7,3 @@ Site pessoal. HTML/CSS/JS puro, sem build. Publicado via GitHub Pages.
 - **Testar localmente:** `python3 -m http.server` e abre http://localhost:8000.
 
 - **Ícone:** pinguim do jogo [SuperTux](https://www.supertux.org/), arte com licença livre (GPL / CC-BY-SA).
-- **Easter egg:** de vez em quando alguém salta da ponte para o Douro. Clicar na ponte faz alguém saltar nesse sítio.
