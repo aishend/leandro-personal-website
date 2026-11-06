@@ -522,6 +522,99 @@
     }
 
     // barcos rabelos on the Douro: slow, fade in and out, both directions
+    // barco rabelo, facing right: wide square sail,
+    // wine barrels on deck, raised stern platform, long steering oar (espadela)
+    // going into the water and the tall curved bow. `anchor` = row on the waterline.
+    const RABELO = { anchor: 10, rows: [
+      "                          |                    ",
+      "               .__________|__________.         ",
+      "               |                     |         ",
+      "               |                     |         ",
+      "               |                     |         ",
+      "               '----------+----------'         ",
+      "       ______             |                    ",
+      "      |______|            |                ,   ",
+      "     /|  ||  |(_)(_)(_)(_)(_)(_)(_)(_)    /|   ",
+      "    / |__||__|(_)(_)(_)(_)(_)(_)(_)(_)___/ |   ",
+      "   /  \\_________________________________/      ",
+      "  /                                            ",
+    ] };
+    const RABELO_S = { anchor: 5, rows: [
+      "          |       ",
+      "     .----+----.  ",
+      "     |         |  ",
+      "  _  '----+----'  ",
+      " |_|(_)(_)(_)(_) /|",
+      " /\\_____________/ ",
+    ] };
+    // pad rows to the same width so mirroring keeps everything aligned
+    for (const sp of [RABELO, RABELO_S]) {
+      const w = Math.max(...sp.rows.map(r => r.length));
+      sp.rows = sp.rows.map(r => r.padEnd(w));
+    }
+    const MIRROR = { "/": "\\", "\\": "/", "(": ")", ")": "(" };
+    const flip = sp => ({ anchor: sp.anchor, rows: sp.rows.map(r =>
+      [...r].reverse().map(c => MIRROR[c] || c).join("")) });
+    let boats = [], nextBoat = 3;
+
+    function updateBoats(t, dt) {
+      for (const b of boats) b.x += b.dir * b.speed * dt;
+      const had = boats.length;
+      boats = boats.filter(b => b.dir === 1 ? b.x < b.end : b.x > b.end);
+      if (had && !boats.length) nextBoat = t + 3 + Math.random() * 7;   // calm water between boats
+      if (t >= nextBoat && boats.length < 1) {
+        const lanes = [0];
+        const free = lanes.filter(l => !boats.some(b => b.lane === l));
+        if (free.length) {
+          const lane = free[(Math.random() * free.length) | 0];
+          const dir = Math.random() < 0.5 ? 1 : -1;
+          const base = H > 50 ? RABELO : RABELO_S;
+          const sprite = dir === 1 ? base : flip(base);
+          const w = sprite.rows[0].length;
+          // start and end somewhere inside the view, so they appear and vanish on the water
+          const a = W * (0.05 + Math.random() * 0.2), z = W * (0.75 + Math.random() * 0.2) - w;
+          boats.push({
+            sprite, w, lane, dir,
+            x: dir === 1 ? a : z, start: dir === 1 ? a : z, end: dir === 1 ? z : a,
+            speed: W / (38 + Math.random() * 18),
+          });
+        }
+        nextBoat = t + 4 + Math.random() * 8;
+      }
+    }
+
+    function boatCells(t) {
+      const cells = new Map();
+      const waterRow = Math.ceil(WATER * H);
+      // far lane first so the closer boat is drawn on top
+      for (const b of [...boats].sort((a, c) => a.lane - c.lane)) {
+        const p = Math.abs(b.x - b.start) / Math.abs(b.end - b.start);
+        const alpha = Math.min(1, p / 0.18, (1 - p) / 0.18);       // fade in / fade out
+        const hull = Math.min(H - 1, waterRow + 1);
+        const top = hull - b.sprite.anchor;
+        const bx = Math.floor(b.x);
+        b.sprite.rows.forEach((row, ry) => {
+          // fill between the outer edges so the sail and hull hide what's behind them
+          const from = row.search(/\S/), to = row.trimEnd().length;
+          for (let cx = Math.max(0, from); cx < to; cx++) {
+            const x = bx + cx, y = top + ry;
+            if (x < 0 || x >= W || y < 0 || y >= H) continue;
+            if (hash(x * 3 + ry, Math.floor(t * 6)) < alpha) cells.set(y * W + x, row[cx]);
+          }
+        });
+        // wake behind the stern
+        const wakeLen = 10;
+        for (let k = 1; k <= wakeLen; k++) {
+          const x = b.dir === 1 ? bx - k : bx + b.w + k - 1;
+          if (x < 0 || x >= W) continue;
+          const a = alpha * (1 - k / wakeLen);
+          if (hash(x, Math.floor(t * 5) + k) < a) cells.set(hull * W + x, k < 4 ? "~" : "-");
+          if (k > 3 && hull + 1 < H && hash(x + 7, Math.floor(t * 5)) < a * 0.6) cells.set((hull + 1) * W + x, "-");
+        }
+      }
+      return cells;
+    }
+
     // saltos da ponte: now and then someone climbs the lower-deck railing,
     // raises their arms and jumps into the Douro. Click the bridge to send one.
     let jumpers = [], nextJump = 8 + Math.random() * 12;
@@ -594,8 +687,10 @@
     function frame(now) {
       const t = now / 1000, el = reduce ? 1e9 : now - t0;
       const deckRow = Math.round(DECK * H - 0.5) - 1;
-      if (!reduce) { updateTrams(t); updateJumpers(t); }
-      const BC = jumperCells(t);
+      const dtB = Math.min(0.2, t - (frame.lt || t)); frame.lt = t;
+      if (!reduce) { updateTrams(t); updateBoats(t, dtB); updateJumpers(t); }
+      const BC = boatCells(t);
+      for (const [k, v] of jumperCells(t)) BC.set(k, v);
       const tramRow = deckRow - 1;
 
       let base = "", lit = "", fig = "";
