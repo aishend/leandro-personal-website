@@ -116,21 +116,15 @@
     .links { display: flex; align-items: center; gap: 24px; font-size: 13px; color: var(--mid); }
     .links a:hover { color: var(--fg); }
     .lang {
-      display: flex;
-      border: 1px solid #2a2c2f; border-radius: 7px;
-      padding: 2px; gap: 2px;
-      font-family: var(--mono); font-size: 11px;
-    }
-    .lang button {
+      display: flex; align-items: center; gap: 6px;
       background: none; border: none; cursor: pointer;
-      font: inherit; letter-spacing: .06em;
-      color: var(--mid);
-      min-width: 38px; height: 26px; padding: 0 8px;
-      border-radius: 5px;
-      transition: background .15s, color .15s;
+      font-family: var(--mono); font-size: 11px; letter-spacing: .06em;
+      color: var(--dim);
+      padding: 12px 10px; margin: -12px -10px;   /* bigger click area, same look */
     }
-    .lang button:hover { color: var(--fg); background: #17191b; }
-    .lang button[aria-pressed="true"] { color: var(--bg); background: #d9d9d6; }
+    .lang span[aria-current="true"] { color: var(--fg); }
+    .lang:hover span { color: var(--mid); }
+    .lang:hover span[aria-current="true"] { color: var(--fg); }
     .btn {
       padding: 7px 13px; border-radius: 7px;
       background: #d9d9d6; color: #0a0b0c !important;
@@ -251,9 +245,7 @@
       <div class="links">
         <a href="https://www.linkedin.com/in/leandro-afonso-m/" target="_blank" rel="noopener">LinkedIn</a>
         <a href="https://github.com/aishend" target="_blank" rel="noopener">GitHub</a>
-        <div class="lang" role="group" aria-label="Idioma / Language">
-          <button type="button" data-lang="pt" lang="pt">PT</button><button type="button" data-lang="en" lang="en">EN</button>
-        </div>
+        <button type="button" class="lang" id="langBtn" aria-label="Mudar idioma / Change language"><span data-lang="pt" lang="pt">PT</span><span>/</span><span data-lang="en" lang="en">EN</span></button>
         <a class="btn" href="mailto:leandroafonsopm@gmail.com" data-i18n="contact">Contacto</a>
       </div>
     </div>
@@ -377,7 +369,7 @@
       document.title = t.title;
       document.querySelector('meta[name="description"]').content = t.desc;
       document.querySelectorAll("[data-i18n]").forEach(el => { el.innerHTML = t[el.dataset.i18n]; });
-      document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === l));
+      document.querySelectorAll(".lang [data-lang]").forEach(b => b.setAttribute("aria-current", b.dataset.lang === l));
       if (save) {
         try { localStorage.setItem("lang", l); } catch (e) {}
         const u = new URL(location.href);
@@ -386,7 +378,8 @@
       }
       showWx();
     }
-    document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang, true)));
+    // one click anywhere on the toggle switches to the other language
+    $("langBtn").addEventListener("click", () => setLang(lang === "pt" ? "en" : "pt", true));
 
     const hash = (x, y) => {
       const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
