@@ -4,10 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Leandro Moreira — Engenharia, FEUP, Porto</title>
-  <meta name="description" content="Leandro Moreira, estudante de engenharia na FEUP — Faculdade de Engenharia da Universidade do Porto. Baseado no Porto, Portugal." />
+  <meta name="description" content="Leandro Moreira, estudante de Engenharia Informática e Computação na FEUP — Universidade do Porto. Porto, Portugal." />
   <meta name="author" content="Leandro Moreira" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://leandromoreira.pt/" />
+  <link rel="alternate" hreflang="pt" href="https://leandromoreira.pt/" />
+  <link rel="alternate" hreflang="en" href="https://leandromoreira.pt/?lang=en" />
+  <link rel="alternate" hreflang="x-default" href="https://leandromoreira.pt/" />
+  <meta property="og:locale:alternate" content="en_GB" />
+  <script>
+    // pick language before first paint: ?lang= > saved choice > browser > english
+    (function () {
+      var q = new URLSearchParams(location.search).get("lang");
+      var saved = null; try { saved = localStorage.getItem("lang"); } catch (e) {}
+      var nav = (navigator.languages || [navigator.language || ""]).map(function (l) { return l.slice(0, 2).toLowerCase(); });
+      var pick = [q, saved].concat(nav).find(function (l) { return l === "pt" || l === "en"; }) || "en";
+      document.documentElement.lang = pick === "pt" ? "pt-PT" : "en";
+      window.__lang = pick;
+    })();
+  </script>
   <meta name="theme-color" content="#0a0b0c" />
   <meta name="color-scheme" content="dark" />
   <meta property="og:type" content="profile" />
@@ -95,8 +110,15 @@
     }
     .brand { display: flex; align-items: center; gap: 10px; font-weight: 500; font-size: 15px; }
     .brand svg { width: 16px; height: 22px; }
-    .links { display: flex; align-items: center; gap: 28px; font-size: 13px; color: var(--mid); }
+    .links { display: flex; align-items: center; gap: 24px; font-size: 13px; color: var(--mid); }
     .links a:hover { color: var(--fg); }
+    .lang { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; color: var(--dim); }
+    .lang button {
+      background: none; border: none; cursor: pointer;
+      font: inherit; color: var(--dim); padding: 4px 2px; letter-spacing: .06em;
+    }
+    .lang button:hover { color: var(--fg); }
+    .lang button[aria-pressed="true"] { color: var(--fg); }
     .btn {
       padding: 7px 13px; border-radius: 7px;
       background: #d9d9d6; color: #0a0b0c !important;
@@ -184,6 +206,7 @@
 
     @media (max-width: 760px) {
       .links a:not(.btn) { display: none; }
+      .links { gap: 16px; }
       .figs { grid-template-columns: 1fr; gap: 56px; }
       .fig { padding: 0; border-left: none; }
       .hero-text .wrap { flex-direction: column; align-items: flex-start; }
@@ -217,7 +240,10 @@
       <div class="links">
         <a href="https://www.linkedin.com/in/leandro-afonso-m/" target="_blank" rel="noopener">LinkedIn</a>
         <a href="https://github.com/aishend" target="_blank" rel="noopener">GitHub</a>
-        <a class="btn" href="mailto:leandroafonsopm@gmail.com">Contacto</a>
+        <div class="lang" role="group" aria-label="Idioma / Language">
+          <button type="button" data-lang="pt" lang="pt">PT</button><span>/</span><button type="button" data-lang="en" lang="en">EN</button>
+        </div>
+        <a class="btn" href="mailto:leandroafonsopm@gmail.com" data-i18n="contact">Contacto</a>
       </div>
     </div>
   </nav>
@@ -239,7 +265,7 @@
       <div class="wrap">
         <div>
           <h1>Leandro Moreira</h1>
-          <p>Engenharia · FEUP · Porto</p>
+          <p data-i18n="sub">Engenharia Informática · FEUP · Porto</p>
         </div>
         <div class="label">Fig. 0 — Ponte Luís I<br />41.1399° N, 8.6094° W</div>
       </div>
@@ -248,8 +274,8 @@
 
   <section class="overview">
     <div class="wrap">
-      <h2 class="label">Sobre</h2>
-      <p>Leandro Moreira é estudante de engenharia na Faculdade de Engenharia da Universidade do Porto. <span>Este espaço está em construção — por agora, o melhor caminho é o LinkedIn, o GitHub ou um email.</span></p>
+      <h2 class="label" data-i18n="about">Sobre</h2>
+      <p data-i18n="bio">Olá, sou o Leandro Moreira. Estudo Engenharia Informática e Computação na Faculdade de Engenharia da Universidade do Porto. <span>Este espaço está em construção — por agora, o melhor caminho é o LinkedIn, o GitHub ou um email.</span></p>
     </div>
   </section>
 
@@ -257,26 +283,26 @@
     <div class="fig">
       <span class="label">Fig. 1</span>
       <pre id="f1" aria-hidden="true"></pre>
-      <h3>Engenharia</h3>
-      <p>Estudante na FEUP — Faculdade de Engenharia da Universidade do Porto.</p>
+      <h3 data-i18n="f1t">Engenharia</h3>
+      <p data-i18n="f1p">Engenharia Informática e Computação na FEUP — Universidade do Porto.</p>
     </div>
     <div class="fig">
       <span class="label">Fig. 2</span>
       <pre id="f2" aria-hidden="true"></pre>
       <h3>Porto</h3>
-      <p>Baseado no Porto, Portugal.</p>
+      <p data-i18n="f2p">A viver no Porto, Portugal.</p>
     </div>
     <div class="fig">
       <span class="label">Fig. 3</span>
       <pre id="f3" aria-hidden="true"></pre>
-      <h3>Em construção</h3>
-      <p>Projetos e trabalho, em breve aqui.</p>
+      <h3 data-i18n="f3t">Em construção</h3>
+      <p data-i18n="f3p">Projetos e trabalho, em breve aqui.</p>
     </div>
   </section>
 
   <section class="portrait" id="portrait">
     <div class="wrap">
-      <h2 class="label">Fig. 4 — Retrato</h2>
+      <h2 class="label" data-i18n="portrait">Fig. 4 — Retrato</h2>
       <pre id="pAscii" aria-hidden="true"></pre>
     </div>
   </section>
@@ -297,6 +323,58 @@
     const $ = id => document.getElementById(id);
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     $("year").textContent = new Date().getFullYear();
+
+    /* =====================================================
+       Idiomas (PT / EN)
+       ===================================================== */
+    const T = {
+      pt: {
+        title: "Leandro Moreira — Engenharia Informática, FEUP, Porto",
+        desc: "Leandro Moreira, estudante de Engenharia Informática e Computação na FEUP — Universidade do Porto. Porto, Portugal.",
+        contact: "Contacto",
+        sub: "Engenharia Informática · FEUP · Porto",
+        about: "Sobre",
+        bio: "Olá, sou o Leandro Moreira. Estudo Engenharia Informática e Computação na Faculdade de Engenharia da Universidade do Porto. <span>Este espaço está em construção — por agora, o melhor caminho é o LinkedIn, o GitHub ou um email.</span>",
+        f1t: "Engenharia",
+        f1p: "Engenharia Informática e Computação na FEUP — Universidade do Porto.",
+        f2p: "A viver no Porto, Portugal.",
+        f3t: "Em construção",
+        f3p: "Projetos e trabalho, em breve aqui.",
+        portrait: "Fig. 4 — Retrato",
+      },
+      en: {
+        title: "Leandro Moreira — Informatics and Computing Engineering, FEUP, Porto",
+        desc: "Leandro Moreira, Informatics and Computing Engineering student at FEUP — University of Porto. Porto, Portugal.",
+        contact: "Contact",
+        sub: "Computer Engineering · FEUP · Porto",
+        about: "About",
+        bio: "Hi, I'm Leandro Moreira. I study Informatics and Computing Engineering at the Faculty of Engineering of the University of Porto. <span>This space is still under construction — for now, the best way to reach me is LinkedIn, GitHub or email.</span>",
+        f1t: "Engineering",
+        f1p: "Informatics and Computing Engineering at FEUP — University of Porto.",
+        f2p: "Based in Porto, Portugal.",
+        f3t: "Under construction",
+        f3p: "Projects and work, coming soon.",
+        portrait: "Fig. 4 — Portrait",
+      },
+    };
+    let lang = window.__lang || "pt";
+    function setLang(l, save) {
+      lang = l;
+      const t = T[l];
+      document.documentElement.lang = l === "pt" ? "pt-PT" : "en";
+      document.title = t.title;
+      document.querySelector('meta[name="description"]').content = t.desc;
+      document.querySelectorAll("[data-i18n]").forEach(el => { el.innerHTML = t[el.dataset.i18n]; });
+      document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === l));
+      if (save) {
+        try { localStorage.setItem("lang", l); } catch (e) {}
+        const u = new URL(location.href);
+        l === "pt" ? u.searchParams.delete("lang") : u.searchParams.set("lang", l);
+        history.replaceState(null, "", u);
+      }
+      showWx();
+    }
+    document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang, true)));
 
     const hash = (x, y) => {
       const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
@@ -417,24 +495,24 @@
 
     const glyphs = "/\\|=-+_:.#";
 
-    // metros (linha D) on the upper deck: random, both directions, two tracks
-    const TRAM = 14;
-    let trams = [], lastT = 0, nextSpawn = 0;
+    // metros (linha D) on the upper deck: one at a time, same speed,
+    // alternating sides at random so they never meet
+    const TRAM = 14, TRAM_SECONDS = 11;
+    let trams = [], lastT = 0, nextSpawn = 1, lastDir = 0, sameDirRun = 0;
     const tramChar = j => j === 0 ? "[" : j === TRAM - 1 ? "]" : j % 7 === 0 ? "|" : "=";
 
     function updateTrams(t) {
       const dt = Math.min(0.2, t - lastT); lastT = t;
-      for (const m of trams) m.x += m.dir * m.speed * dt;
-      trams = trams.filter(m => m.x > -TRAM - 2 && m.x < W + 2);
-      if (t >= nextSpawn) {
-        const dir = Math.random() < 0.5 ? 1 : -1;
-        const start = dir === 1 ? -TRAM : W;
-        // don't spawn on top of another metro going the same way
-        const clear = trams.every(m => m.dir !== dir || Math.abs(m.x - start) > TRAM * 3);
-        if (clear && trams.length < 3) {
-          trams.push({ x: start, dir, speed: W / (9 + Math.random() * 5) });
-        }
-        nextSpawn = t + 2 + Math.random() * 6;
+      for (const m of trams) m.x += m.dir * ((W + TRAM) / TRAM_SECONDS) * dt;
+      const before = trams.length;
+      trams = trams.filter(m => m.x > -TRAM - 1 && m.x < W + 1);
+      if (before && !trams.length) nextSpawn = t + 1.5 + Math.random() * 4;  // pause after one leaves
+      if (!trams.length && t >= nextSpawn) {
+        let dir = Math.random() < 0.5 ? 1 : -1;
+        if (dir === lastDir && sameDirRun >= 1) dir = -dir;                   // at most 2 in a row from the same side
+        sameDirRun = dir === lastDir ? sameDirRun + 1 : 0;
+        lastDir = dir;
+        trams.push({ x: dir === 1 ? -TRAM : W, dir });
       }
     }
 
@@ -442,8 +520,7 @@
       const t = now / 1000, el = reduce ? 1e9 : now - t0;
       const deckRow = Math.round(DECK * H - 0.5) - 1;
       if (!reduce) updateTrams(t);
-      // eastbound on the near track, westbound on the far one, so they pass each other
-      const track = dir => dir === 1 ? deckRow : deckRow - 1;
+      const tramRow = deckRow - 1;
 
       let base = "", lit = "";
       for (let y = 0; y < H; y++) {
@@ -473,7 +550,7 @@
             if (win[i] > 0.82 && Math.sin(t * 0.3 + win[i] * 40) > -0.3) L = c;
             for (const m of trams) {
               const j = x - Math.floor(m.x);
-              if (y === track(m.dir) && j >= 0 && j < TRAM) L = tramChar(j);
+              if (y === tramRow && j >= 0 && j < TRAM) L = tramChar(j);
             }
           }
 
@@ -495,23 +572,40 @@
     tick(); setInterval(tick, 1000);
 
     const WX = {
-      0: "Céu limpo", 1: "Pouco nublado", 2: "Parcialmente nublado", 3: "Nublado",
-      45: "Nevoeiro", 48: "Nevoeiro",
-      51: "Chuvisco", 53: "Chuvisco", 55: "Chuvisco forte", 56: "Chuvisco gelado", 57: "Chuvisco gelado",
-      61: "Chuva fraca", 63: "Chuva", 65: "Chuva forte", 66: "Chuva gelada", 67: "Chuva gelada",
-      71: "Neve", 73: "Neve", 75: "Neve forte", 77: "Neve",
-      80: "Aguaceiros", 81: "Aguaceiros", 82: "Aguaceiros fortes", 85: "Aguaceiros de neve", 86: "Aguaceiros de neve",
-      95: "Trovoada", 96: "Trovoada com granizo", 99: "Trovoada com granizo",
+      pt: {
+        0: "Céu limpo", 1: "Pouco nublado", 2: "Parcialmente nublado", 3: "Nublado",
+        45: "Nevoeiro", 48: "Nevoeiro",
+        51: "Chuvisco", 53: "Chuvisco", 55: "Chuvisco forte", 56: "Chuvisco gelado", 57: "Chuvisco gelado",
+        61: "Chuva fraca", 63: "Chuva", 65: "Chuva forte", 66: "Chuva gelada", 67: "Chuva gelada",
+        71: "Neve", 73: "Neve", 75: "Neve forte", 77: "Neve",
+        80: "Aguaceiros", 81: "Aguaceiros", 82: "Aguaceiros fortes", 85: "Aguaceiros de neve", 86: "Aguaceiros de neve",
+        95: "Trovoada", 96: "Trovoada com granizo", 99: "Trovoada com granizo",
+      },
+      en: {
+        0: "Clear sky", 1: "Mostly clear", 2: "Partly cloudy", 3: "Overcast",
+        45: "Fog", 48: "Fog",
+        51: "Drizzle", 53: "Drizzle", 55: "Heavy drizzle", 56: "Freezing drizzle", 57: "Freezing drizzle",
+        61: "Light rain", 63: "Rain", 65: "Heavy rain", 66: "Freezing rain", 67: "Freezing rain",
+        71: "Snow", 73: "Snow", 75: "Heavy snow", 77: "Snow",
+        80: "Showers", 81: "Showers", 82: "Heavy showers", 85: "Snow showers", 86: "Snow showers",
+        95: "Thunderstorm", 96: "Thunderstorm with hail", 99: "Thunderstorm with hail",
+      },
     };
     const RAIN = { 51: .004, 53: .006, 55: .008, 61: .008, 63: .014, 65: .022, 80: .01, 81: .016, 82: .024, 95: .02, 96: .022, 99: .024 };
+    let wxNow = null;
+    const showWx = () => {
+      if (!wxNow) return;
+      wxEl.textContent = ` · ${Math.round(wxNow.temperature_2m)}°C · ${WX[lang][wxNow.weather_code] ?? ""}`;
+    };
     async function weather() {
       try {
         const r = await fetch("https://api.open-meteo.com/v1/forecast?latitude=41.1496&longitude=-8.611&current=temperature_2m,weather_code&timezone=Europe%2FLisbon");
-        const { current: c } = await r.json();
-        wxEl.textContent = ` · ${Math.round(c.temperature_2m)}°C · ${WX[c.weather_code] ?? ""}`;
-        rain = reduce ? 0 : (RAIN[c.weather_code] || 0);
+        wxNow = (await r.json()).current;
+        showWx();
+        rain = reduce ? 0 : (RAIN[wxNow.weather_code] || 0);
       } catch (e) { wxEl.textContent = ""; }
     }
+    setLang(lang, false);
     weather(); setInterval(weather, 15 * 60 * 1000);
 
     /* =====================================================
