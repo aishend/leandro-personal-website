@@ -2,12 +2,12 @@
 <html lang="pt-PT">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Leandro Moreira — Engenharia, FEUP, Porto</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Leandro Moreira — Engenharia Informática, FEUP, Porto</title>
   <meta name="description" content="Leandro Moreira, estudante de Engenharia Informática e Computação na FEUP — Universidade do Porto. Porto, Portugal." />
   <meta name="author" content="Leandro Moreira" />
   <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://leandromoreira.pt/" />
+  <link rel="canonical" id="canonical" href="https://leandromoreira.pt/" />
   <link rel="alternate" hreflang="pt" href="https://leandromoreira.pt/" />
   <link rel="alternate" hreflang="en" href="https://leandromoreira.pt/?lang=en" />
   <link rel="alternate" hreflang="x-default" href="https://leandromoreira.pt/" />
@@ -21,6 +21,8 @@
       var pick = [q, saved].concat(nav).find(function (l) { return l === "pt" || l === "en"; }) || "en";
       document.documentElement.lang = pick === "pt" ? "pt-PT" : "en";
       window.__lang = pick;
+      // the english URL is its own page for search engines
+      if (q === "en") document.getElementById("canonical").href = "https://leandromoreira.pt/?lang=en";
     })();
   </script>
   <meta name="theme-color" content="#0a0b0c" />
@@ -28,16 +30,16 @@
   <meta property="og:type" content="profile" />
   <meta property="og:locale" content="pt_PT" />
   <meta property="og:site_name" content="Leandro Moreira" />
-  <meta property="og:title" content="Leandro Moreira — Engenharia, FEUP, Porto" />
-  <meta property="og:description" content="Estudante de engenharia na FEUP, Universidade do Porto." />
+  <meta property="og:title" content="Leandro Moreira — Engenharia Informática, FEUP, Porto" />
+  <meta property="og:description" content="Estudante de Engenharia Informática e Computação na FEUP, Universidade do Porto." />
   <meta property="og:url" content="https://leandromoreira.pt/" />
   <meta property="og:image" content="https://leandromoreira.pt/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="Ponte Luís I, no Porto, desenhada em ASCII" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Leandro Moreira — Engenharia, FEUP, Porto" />
-  <meta name="twitter:description" content="Estudante de engenharia na FEUP, Universidade do Porto." />
+  <meta name="twitter:title" content="Leandro Moreira — Engenharia Informática, FEUP, Porto" />
+  <meta name="twitter:description" content="Estudante de Engenharia Informática e Computação na FEUP, Universidade do Porto." />
   <meta name="twitter:image" content="https://leandromoreira.pt/og.png" />
   <script type="application/ld+json">
   {
@@ -46,6 +48,9 @@
     "name": "Leandro Moreira",
     "url": "https://leandromoreira.pt/",
     "email": "mailto:leandroafonsopm@gmail.com",
+    "image": "https://leandromoreira.pt/icon-512.png",
+    "description": "Estudante de Engenharia Informática e Computação na FEUP — Universidade do Porto.",
+    "knowsLanguage": ["pt", "en"],
     "affiliation": {
       "@type": "CollegeOrUniversity",
       "name": "Faculdade de Engenharia da Universidade do Porto",
@@ -67,13 +72,15 @@
   <link rel="preconnect" href="https://api.open-meteo.com" crossorigin />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap" /></noscript>
   <style>
     :root {
       --bg: #0a0b0c;
       --fg: #ececea;
       --mid: #8b8d8f;
-      --dim: #55585b;
+      --dim: #7a7d80;
       --line: #1c1e20;
       --ascii: #34373a;
       --ascii-hi: #c9cbcc;
@@ -87,6 +94,8 @@
       color: var(--fg);
       font-family: var(--sans);
       -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      text-size-adjust: 100%; -webkit-text-size-adjust: 100%;
     }
     ::selection { background: var(--fg); color: var(--bg); }
     a { color: inherit; text-decoration: none; }
@@ -106,14 +115,16 @@
       position: fixed; top: 0; left: 0; right: 0; z-index: 10;
       border-bottom: 1px solid var(--line);
       background: rgba(10,11,12,.72);
-      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+              backdrop-filter: blur(10px);
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
     }
+    a:focus-visible, button:focus-visible { outline: 1px solid var(--amber); outline-offset: 3px; border-radius: 4px; }
     nav .wrap {
       height: 60px;
       display: flex; align-items: center; justify-content: space-between;
     }
-    .brand { display: flex; align-items: center; gap: 10px; font-weight: 500; font-size: 15px; }
-    .brand { gap: 9px; font-family: var(--mono); font-weight: 400; font-size: 14px; letter-spacing: -.01em; }
+    .brand { display: flex; align-items: center; gap: 9px; font-family: var(--mono); font-weight: 400; font-size: 14px; letter-spacing: -.01em; }
     .brand .ps1 { font-family: var(--mono); color: var(--amber); font-weight: 400; }
     .brand .cur {
       width: 8px; height: 15px; margin-left: -4px;
@@ -154,8 +165,9 @@
               mask-image: radial-gradient(ellipse 62% 70% at 50% 46%, #000 45%, transparent 100%);
     }
     .scene .stack { position: relative; }
-    .scene pre {
-      font-family: var(--mono);
+    .scene pre, .scene .probe {
+      /* system mono: no font swap, so the bridge never jumps while loading */
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", monospace;
       white-space: pre;
       user-select: none;
       pointer-events: none;
@@ -164,7 +176,7 @@
     #bLight { position: absolute; inset: 0; color: var(--amber); text-shadow: 0 0 6px rgba(227,181,79,.5); }
 
     .hero-top { position: absolute; top: 84px; left: 0; right: 0; z-index: 1; }
-    .hero-top .wrap { display: flex; justify-content: space-between; gap: 16px; }
+    .hero-top .wrap { display: flex; justify-content: space-between; gap: 16px; height: 18px; line-height: 18px; overflow: hidden; }
     #clock { color: var(--fg); font-variant-numeric: tabular-nums; }
     .hero-text {
       position: absolute; left: 0; right: 0; bottom: 48px;
@@ -203,17 +215,7 @@
     .fig h3 { font-weight: 500; font-size: 17px; }
     .fig p { margin-top: 8px; font-size: 13px; line-height: 1.55; color: var(--mid); }
 
-    .portrait { display: none; }
-    .portrait.on { display: block; }
-    .portrait pre {
-      margin-top: 22px;
-      font-family: var(--mono);
-      font-size: 7px; line-height: 7px;
-      color: #8c8f91;
-      white-space: pre;
-    }
-
-    footer { border-top: 1px solid var(--line); padding: 28px 0 36px; }
+    footer { border-top: 1px solid var(--line); padding: 28px 0 calc(36px + env(safe-area-inset-bottom)); }
     footer .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; font-size: 13px; color: var(--mid); }
     footer .row { display: flex; gap: 24px; }
     footer a:hover { color: var(--fg); }
@@ -251,7 +253,7 @@
       <div class="links">
         <a href="https://www.linkedin.com/in/leandro-afonso-m/" target="_blank" rel="noopener">LinkedIn</a>
         <a href="https://github.com/aishend" target="_blank" rel="noopener">GitHub</a>
-        <button type="button" class="lang" id="langBtn" aria-label="Mudar idioma / Change language"><span data-lang="pt" lang="pt">PT</span><span>/</span><span data-lang="en" lang="en">EN</span></button>
+        <button type="button" class="lang" id="langBtn" title="Mudar idioma / Change language"><span data-lang="pt" lang="pt">PT</span><span>/</span><span data-lang="en" lang="en">EN</span></button>
         <a class="btn" href="mailto:leandroafonsopm@gmail.com" data-i18n="contact">Contacto</a>
       </div>
     </div>
@@ -281,6 +283,7 @@
     </div>
   </header>
 
+  <main>
   <section class="overview">
     <div class="wrap">
       <h2 class="label" data-i18n="about">Sobre</h2>
@@ -308,13 +311,7 @@
       <p data-i18n="f3p">Projetos e trabalho, em breve aqui.</p>
     </div>
   </section>
-
-  <section class="portrait" id="portrait">
-    <div class="wrap">
-      <h2 class="label" data-i18n="portrait">Fig. 4 — Retrato</h2>
-      <pre id="pAscii" aria-hidden="true"></pre>
-    </div>
-  </section>
+  </main>
 
   <footer>
     <div class="wrap">
@@ -349,7 +346,6 @@
         f2p: "A viver no Porto, Portugal.",
         f3t: "Em construção",
         f3p: "Projetos e trabalho, em breve aqui.",
-        portrait: "Fig. 4 — Retrato",
       },
       en: {
         title: "Leandro Moreira — Informatics and Computing Engineering, FEUP, Porto",
@@ -363,7 +359,6 @@
         f2p: "Based in Porto, Portugal.",
         f3t: "Under construction",
         f3p: "Projects and work, coming soon.",
-        portrait: "Fig. 4 — Portrait",
       },
     };
     let lang = window.__lang || "pt";
@@ -380,6 +375,7 @@
         const u = new URL(location.href);
         l === "pt" ? u.searchParams.delete("lang") : u.searchParams.set("lang", l);
         history.replaceState(null, "", u);
+        $("canonical").href = "https://leandromoreira.pt/" + (l === "en" ? "?lang=en" : "");
       }
       showWx();
     }
@@ -400,7 +396,7 @@
     let W = 0, H = 0, fs = 10, cw = 6, lh = 10;
     let grid = [], kind = [], win = [];    // static scene
     let order = [];                       // reveal delay per cell
-    let t0 = performance.now();
+    let t0 = performance.now(), built = false;
 
     const WATER = 0.80, DECK = 0.25, LOW = 0.70;
     const XL = 0.24, XR = 0.76;
@@ -416,11 +412,14 @@
       const targetCols = innerWidth < 760 ? 84 : 170;
       fs = Math.max(5, Math.min(11, (box.width * 0.98) / (targetCols * 0.6)));
       [bBase, bLight].forEach(p => { p.style.fontSize = fs + "px"; p.style.lineHeight = fs + "px"; });
-      const probe = document.createElement("span");
+      // measure the character width off-screen, without clearing the drawing
+      const probe = document.createElement("pre");
+      probe.className = "probe";
+      probe.style.cssText = `position:absolute;visibility:hidden;left:-9999px;top:0;font-size:${fs}px`;
       probe.textContent = "M".repeat(50);
-      bBase.textContent = ""; bBase.appendChild(probe);
+      sceneEl.appendChild(probe);
       cw = probe.getBoundingClientRect().width / 50; lh = fs;
-      bBase.textContent = "";
+      probe.remove();
       W = Math.floor((box.width * 0.98) / cw);
       // keep the bridge's proportions on any screen
       H = Math.floor(Math.min(box.height * 0.92, W * cw * 0.56) / lh);
@@ -501,7 +500,8 @@
         const d = Math.hypot((x - W / 2) / W, (y - H * 0.5) / H * 0.6);
         order[i] = d * 2600 + hash(x, y + 1) * 500;
       }
-      t0 = performance.now();
+      if (!built) { t0 = performance.now(); built = true; }   // intro animation only once
+      frame(performance.now());                                  // redraw right away, no empty frame
     }
 
     const glyphs = "/\\|=-+_:.#";
@@ -685,42 +685,19 @@
     }
 
     /* =====================================================
-       Optional portrait: shown only if photo.jpg exists
-       ===================================================== */
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const PW = Math.min(110, Math.floor(($("portrait").clientWidth || 900) / 4.3));
-        const PH = Math.round(PW * (img.height / img.width) * 0.5);
-        const c = document.createElement("canvas"); c.width = PW; c.height = PH;
-        const g = c.getContext("2d"); g.drawImage(img, 0, 0, PW, PH);
-        const d = g.getImageData(0, 0, PW, PH).data;
-        const L = new Float32Array(PW * PH);
-        for (let i = 0; i < L.length; i++) L[i] = (0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]) / 255;
-        const sorted = Float32Array.from(L).sort();
-        const ramp = " .:-=+*#%@";
-        let s = "";
-        for (let y = 0; y < PH; y++) {
-          for (let x = 0; x < PW; x++) {
-            const v = L[y * PW + x];
-            let lo = 0, hi = sorted.length;
-            while (lo < hi) { const m = (lo + hi) >> 1; sorted[m] < v ? lo = m + 1 : hi = m; }
-            s += ramp[Math.min(ramp.length - 1, ((lo / sorted.length) * ramp.length) | 0)];
-          }
-          s += "\n";
-        }
-        $("pAscii").textContent = s;
-        $("portrait").classList.add("on");
-      } catch (e) { /* file:// — ignore */ }
-    };
-    img.src = "photo.jpg";
-
-    /* =====================================================
        Loop
        ===================================================== */
     build();
     let rt;
-    addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(build, 150); });
+    // phones fire "resize" when the address bar shows/hides: only redraw when the width changes
+    // (or, on desktop, when the height changes a lot)
+    let lastW = innerWidth, lastH = innerHeight;
+    addEventListener("resize", () => {
+      const wide = innerWidth >= 760;
+      if (innerWidth === lastW && !(wide && Math.abs(innerHeight - lastH) > 80)) return;
+      lastW = innerWidth; lastH = innerHeight;
+      clearTimeout(rt); rt = setTimeout(build, 150);
+    });
 
     let last = 0, heroOn = true, figsOn = false;
     new IntersectionObserver(([e]) => heroOn = e.isIntersecting).observe($("scene"));
