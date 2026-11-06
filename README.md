@@ -6,4 +6,3 @@ Site pessoal. HTML/CSS/JS puro, sem build. Publicado via GitHub Pages.
 - **Retrato (opcional):** coloca uma foto como `photo.jpg` na raiz e aparece uma secção extra com o retrato em ASCII.
 - **Testar localmente:** `python3 -m http.server` e abre http://localhost:8000.
 
-- **Ícone:** pinguim do jogo [SuperTux](https://www.supertux.org/), arte com licença livre (GPL / CC-BY-SA).
