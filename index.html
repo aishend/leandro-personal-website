@@ -153,7 +153,7 @@
       pointer-events: none;
     }
     #bBase  { color: var(--ascii); }
-    #bBoat  { position: absolute; inset: 0; color: #9a9d9f; }
+    #bFig   { position: absolute; inset: 0; color: #9a9d9f; }
     #bLight { position: absolute; inset: 0; color: var(--amber); text-shadow: 0 0 6px rgba(227,181,79,.5); }
 
     .hero-top { position: absolute; top: 84px; left: 0; right: 0; z-index: 1; }
@@ -255,7 +255,7 @@
     <div class="scene" id="scene">
       <div class="stack">
         <pre id="bBase" aria-hidden="true"></pre>
-        <pre id="bBoat" aria-hidden="true"></pre>
+        <pre id="bFig" aria-hidden="true"></pre>
         <pre id="bLight" aria-hidden="true"></pre>
       </div>
     </div>
@@ -391,7 +391,7 @@
     /* =====================================================
        Hero: Ponte Luís I em ASCII
        ===================================================== */
-    const sceneEl = $("scene"), bBase = $("bBase"), bBoat = $("bBoat"), bLight = $("bLight");
+    const sceneEl = $("scene"), bBase = $("bBase"), bFig = $("bFig"), bLight = $("bLight");
     let W = 0, H = 0, fs = 10, cw = 6, lh = 10;
     let grid = [], kind = [], win = [];    // static scene
     let order = [];                       // reveal delay per cell
@@ -409,7 +409,7 @@
       const box = sceneEl.getBoundingClientRect();
       const targetCols = innerWidth < 760 ? 84 : 170;
       fs = Math.max(5, Math.min(11, (box.width * 0.98) / (targetCols * 0.6)));
-      [bBase, bBoat, bLight].forEach(p => { p.style.fontSize = fs + "px"; p.style.lineHeight = fs + "px"; });
+      [bBase, bFig, bLight].forEach(p => { p.style.fontSize = fs + "px"; p.style.lineHeight = fs + "px"; });
       const probe = document.createElement("span");
       probe.textContent = "M".repeat(50);
       bBase.textContent = ""; bBase.appendChild(probe);
@@ -522,105 +522,83 @@
     }
 
     // barcos rabelos on the Douro: slow, fade in and out, both directions
-    // barco rabelo, facing right: wide square sail with the name on it,
-    // wine barrels on deck, raised stern platform, long steering oar (espadela)
-    // going into the water and the tall curved bow. `anchor` = row on the waterline.
-    const RABELO = { anchor: 10, rows: [
-      "                          |                    ",
-      "               .__________|__________.         ",
-      "               |                     |         ",
-      "               |      P O R T O      |         ",
-      "               |                     |         ",
-      "               '----------+----------'         ",
-      "       ______             |                    ",
-      "      |______|            |                ,   ",
-      "     /|  ||  |(_)(_)(_)(_)(_)(_)(_)(_)    /|   ",
-      "    / |__||__|(_)(_)(_)(_)(_)(_)(_)(_)___/ |   ",
-      "   /  \\_________________________________/      ",
-      "  /                                            ",
-    ] };
-    const RABELO_S = { anchor: 5, rows: [
-      "          |       ",
-      "     .----+----.  ",
-      "     |  PORTO  |  ",
-      "  _  '----+----'  ",
-      " |_|(_)(_)(_)(_) /|",
-      " /\\_____________/ ",
-    ] };
-    const MIRROR = { "/": "\\", "\\": "/", "(": ")", ")": "(" };
-    // mirror the drawing but keep the name readable
-    const flip = sp => ({ anchor: sp.anchor, rows: sp.rows.map(r =>
-      [...r].reverse().map(c => MIRROR[c] || c).join("")
-        .replace("O T R O P", "P O R T O").replace("OTROP", "PORTO")) });
-    let boats = [], nextBoat = 3;
+    // saltos da ponte: now and then someone climbs the lower-deck railing,
+    // raises their arms and jumps into the Douro. Click the bridge to send one.
+    let jumpers = [], nextJump = 8 + Math.random() * 12;
+    const lowRow = () => Math.round(LOW * H - 0.5);
+    const deckSpan = () => [Math.ceil((XL + 0.02) * W), Math.floor((XR - 0.02) * W)];
 
-    function updateBoats(t, dt) {
-      for (const b of boats) b.x += b.dir * b.speed * dt;
-      const had = boats.length;
-      boats = boats.filter(b => b.dir === 1 ? b.x < b.end : b.x > b.end);
-      if (had && !boats.length) nextBoat = t + 3 + Math.random() * 7;   // calm water between boats
-      if (t >= nextBoat && boats.length < 1) {
-        const lanes = [0];
-        const free = lanes.filter(l => !boats.some(b => b.lane === l));
-        if (free.length) {
-          const lane = free[(Math.random() * free.length) | 0];
-          const dir = Math.random() < 0.5 ? 1 : -1;
-          const base = H > 50 ? RABELO : RABELO_S;
-          const sprite = dir === 1 ? base : flip(base);
-          const w = sprite.rows[0].length;
-          // start and end somewhere inside the view, so they appear and vanish on the water
-          const a = W * (0.05 + Math.random() * 0.2), z = W * (0.75 + Math.random() * 0.2) - w;
-          boats.push({
-            sprite, w, lane, dir,
-            x: dir === 1 ? a : z, start: dir === 1 ? a : z, end: dir === 1 ? z : a,
-            speed: W / (38 + Math.random() * 18),
-          });
-        }
-        nextBoat = t + 4 + Math.random() * 8;
+    function spawnJumper(t, x) {
+      const [a, b] = deckSpan();
+      if (x === undefined) x = Math.round(a + (0.15 + Math.random() * 0.7) * (b - a));
+      x = Math.max(a + 2, Math.min(b - 2, x));
+      if (jumpers.some(j => Math.abs(j.x - x) < 5)) return;
+      jumpers.push({ x, t0: t, wait: 0.9 + Math.random() * 0.8 });
+    }
+
+    function updateJumpers(t) {
+      jumpers = jumpers.filter(j => t - j.t0 < j.wait + 0.6 + 1.1 + 2.0);
+      if (t >= nextJump) {
+        spawnJumper(t);
+        // sometimes a friend follows
+        if (Math.random() < 0.3) setTimeout(() => spawnJumper(performance.now() / 1000, jumpers.length ? jumpers[jumpers.length - 1].x + 4 : undefined), 1400);
+        nextJump = t + 18 + Math.random() * 30;
       }
     }
 
-    function boatCells(t) {
+    function jumperCells(t) {
       const cells = new Map();
-      const waterRow = Math.ceil(WATER * H);
-      // far lane first so the closer boat is drawn on top
-      for (const b of [...boats].sort((a, c) => a.lane - c.lane)) {
-        const p = Math.abs(b.x - b.start) / Math.abs(b.end - b.start);
-        const alpha = Math.min(1, p / 0.18, (1 - p) / 0.18);       // fade in / fade out
-        const hull = Math.min(H - 1, waterRow + 1);
-        const top = hull - b.sprite.anchor;
-        const bx = Math.floor(b.x);
-        b.sprite.rows.forEach((row, ry) => {
-          // fill between the outer edges so the sail and hull hide what's behind them
-          const from = row.search(/\S/), to = row.trimEnd().length;
-          for (let cx = Math.max(0, from); cx < to; cx++) {
-            const x = bx + cx, y = top + ry;
-            if (x < 0 || x >= W || y < 0 || y >= H) continue;
-            if (hash(x * 3 + ry, Math.floor(t * 6)) < alpha) cells.set(y * W + x, row[cx]);
+      const put = (x, y, str) => {
+        for (let k = 0; k < str.length; k++) {
+          const xx = x + k;
+          if (str[k] !== " " && xx >= 0 && xx < W && y >= 0 && y < H) cells.set(y * W + xx, str[k]);
+        }
+      };
+      const feet = lowRow() - 2;                 // standing on the railing
+      const water = Math.ceil(WATER * H);
+      const D = water - feet, T = 0.55 + D * 0.045;
+      for (const j of jumpers) {
+        const tau = t - j.t0, x = j.x;
+        if (tau < j.wait) {                      // standing, looking down
+          put(x, feet - 1, "o"); put(x, feet, "|");
+        } else if (tau < j.wait + 0.6) {         // arms up
+          put(x - 1, feet - 1, "\\o/"); put(x, feet, "|");
+        } else if (tau < j.wait + 0.6 + T) {     // in the air
+          const f = tau - j.wait - 0.6;
+          const v0 = -4, g = 2 * (D - v0 * T) / (T * T);
+          const y = Math.round(feet + v0 * f + g * f * f / 2);
+          if (v0 + g * f < 0) { put(x - 1, y - 1, "\\o/"); put(x, y, "|"); }
+          else { put(x, y - 1, "|"); put(x, y, "o"); }     // head first
+        } else {                                 // splash + rings
+          const sp = tau - j.wait - 0.6 - T;
+          if (sp < 0.2)      { put(x - 1, water - 1, "\\|/"); put(x - 1, water, "~~~"); }
+          else if (sp < 0.5) { put(x - 2, water - 2, ". ' ."); put(x - 2, water - 1, "\\ | /"); put(x - 2, water, "~~~~~"); }
+          else if (sp < 0.9) { put(x - 2, water - 1, "'   '"); put(x - 3, water, "( ~~~ )"); }
+          else {
+            const r = Math.round(3 + (sp - 0.9) * 7), fade = 1 - (sp - 0.9) / 1.1;
+            if (hash(x, Math.floor(t * 8)) < fade) put(x - r, water, "(");
+            if (hash(x + 1, Math.floor(t * 8)) < fade) put(x + r, water, ")");
+            if (sp < 1.4) put(x - 1, water, "~ ~");
           }
-        });
-        // wake behind the stern
-        const wakeLen = 10;
-        for (let k = 1; k <= wakeLen; k++) {
-          const x = b.dir === 1 ? bx - k : bx + b.w + k - 1;
-          if (x < 0 || x >= W) continue;
-          const a = alpha * (1 - k / wakeLen);
-          if (hash(x, Math.floor(t * 5) + k) < a) cells.set(hull * W + x, k < 4 ? "~" : "-");
-          if (k > 3 && hull + 1 < H && hash(x + 7, Math.floor(t * 5)) < a * 0.6) cells.set((hull + 1) * W + x, "-");
         }
       }
       return cells;
     }
 
+    sceneEl.parentElement.addEventListener("click", e => {
+      const r = bBase.getBoundingClientRect();
+      const x = Math.round((e.clientX - r.left) / cw);
+      spawnJumper(performance.now() / 1000, x);
+    });
+
     function frame(now) {
       const t = now / 1000, el = reduce ? 1e9 : now - t0;
       const deckRow = Math.round(DECK * H - 0.5) - 1;
-      const dtB = Math.min(0.2, t - (frame.lt || t)); frame.lt = t;
-      if (!reduce) { updateTrams(t); updateBoats(t, dtB); }
-      const BC = boatCells(t);
+      if (!reduce) { updateTrams(t); updateJumpers(t); }
+      const BC = jumperCells(t);
       const tramRow = deckRow - 1;
 
-      let base = "", lit = "", boat = "";
+      let base = "", lit = "", fig = "";
       for (let y = 0; y < H; y++) {
         for (let x = 0; x < W; x++) {
           const i = y * W + x;
@@ -653,13 +631,13 @@
           }
 
           const B = el >= order[i] ? BC.get(i) : undefined;
-          if (L !== " ") { base += " "; boat += " "; lit += L; }
-          else if (B !== undefined) { base += " "; boat += B; lit += " "; }
-          else { base += c; boat += " "; lit += " "; }
+          if (L !== " ") { base += " "; fig += " "; lit += L; }
+          else if (B !== undefined) { base += " "; fig += B; lit += " "; }
+          else { base += c; fig += " "; lit += " "; }
         }
-        base += "\n"; lit += "\n"; boat += "\n";
+        base += "\n"; lit += "\n"; fig += "\n";
       }
-      bBase.textContent = base; bBoat.textContent = boat; bLight.textContent = lit;
+      bBase.textContent = base; bFig.textContent = fig; bLight.textContent = lit;
     }
 
     /* =====================================================
