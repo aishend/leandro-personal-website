@@ -203,26 +203,44 @@
     const COLORS = ["#ff4d1a", "#e3b54f", "#1d4dff", "#00b39b", "#d6246e", "#7a3cff"];
     const SIDES = [3, 4, 5, 6, 3, 5];
     let W = 0, H = 0, shapes = [];
+    let view = { x0: 0, y0: 0, x1: 1, y1: 1 };   // the part of the canvas you can see
 
     // the canvas is tiny on purpose: CSS scales it up and blurs it
     function size() {
       const r = canvas.getBoundingClientRect();
       W = 380; H = Math.max(1, Math.round(W * r.height / r.width));
       canvas.width = W; canvas.height = H;
+      // the canvas is bigger than the window (so the blur has no edges): map the window onto it
+      view = {
+        x0: -r.left / r.width * W, x1: (innerWidth - r.left) / r.width * W,
+        y0: -r.top / r.height * H, y1: (innerHeight - r.top) / r.height * H,
+      };
+    }
+
+    // a random point on screen; with (ax, ay) it prefers spots far from there
+    function spot(ax, ay) {
+      const mx = (view.x1 - view.x0) * 0.1, my = (view.y1 - view.y0) * 0.1;
+      let best = null, bestD = -1;
+      for (let k = 0; k < (ax === undefined ? 1 : 4); k++) {
+        const x = view.x0 + mx + Math.random() * (view.x1 - view.x0 - 2 * mx);
+        const y = view.y0 + my + Math.random() * (view.y1 - view.y0 - 2 * my);
+        const d = ax === undefined ? 0 : Math.hypot(x - ax, y - ay);
+        if (d > bestD) { best = { x, y }; bestD = d; }
+      }
+      return best;
     }
 
     function spawn() {
       shapes = COLORS.map((color, i) => ({
         color,
         sides: SIDES[i],
-        x: Math.random() * W,
-        y: Math.random() * H,
+        ...spot(),
         r: (0.22 + Math.random() * 0.16) * Math.min(W, H),
         rot: Math.random() * Math.PI * 2,
         spin: (Math.random() < .5 ? -1 : 1) * (0.04 + Math.random() * 0.08),
         dir: Math.random() * Math.PI * 2,
         speed: 0.035 + Math.random() * 0.03,      // fraction of the screen per second
-        vx: 0, vy: 0, kick: 0,                    // push from a tap, fades out
+        tx: null, ty: null, kick: 0,              // where a tap sends it, extra spin
         wobble: Math.random() * 100,
         pulse: Math.random() * 100,
       }));
@@ -242,21 +260,28 @@
     function step(dt, t) {
       const m = Math.min(W, H);
       for (const s of shapes) {
-        // random walk on the heading, plus a gentle pull back towards the screen
+        // random walk on the heading, plus a gentle pull back when near the edge of the screen
         s.dir += (Math.sin(t * 0.37 + s.wobble) + Math.sin(t * 0.13 + s.wobble * 2.1)) * 0.25 * dt
                + (Math.random() - 0.5) * 0.6 * dt;
-        const cx = W / 2 - s.x, cy = H / 2 - s.y;
-        const far = Math.hypot(cx / W, cy / H);
-        if (far > 0.42) {
-          const want = Math.atan2(cy, cx);
-          let d = want - s.dir;
+        const vcx = (view.x0 + view.x1) / 2, vcy = (view.y0 + view.y1) / 2;
+        const far = Math.max(Math.abs(s.x - vcx) / ((view.x1 - view.x0) / 2), Math.abs(s.y - vcy) / ((view.y1 - view.y0) / 2));
+        if (far > 0.7) {
+          let d = Math.atan2(vcy - s.y, vcx - s.x) - s.dir;
           d = Math.atan2(Math.sin(d), Math.cos(d));
-          s.dir += d * Math.min(1, (far - 0.42) * 6) * dt;
+          s.dir += d * Math.min(1, (far - 0.7) * 8) * dt;
         }
-        const fade = Math.exp(-1.8 * dt);
-        s.vx *= fade; s.vy *= fade; s.kick *= fade;
-        s.x += (Math.cos(s.dir) * s.speed * m + s.vx) * dt;
-        s.y += (Math.sin(s.dir) * s.speed * m + s.vy) * dt;
+        s.x += Math.cos(s.dir) * s.speed * m * dt;
+        s.y += Math.sin(s.dir) * s.speed * m * dt;
+        // after a tap: glide to the new spot, fast at first, then easing in
+        if (s.tx !== null) {
+          const e = 1 - Math.exp(-2.8 * dt);
+          s.x += (s.tx - s.x) * e; s.y += (s.ty - s.y) * e;
+          if (Math.hypot(s.tx - s.x, s.ty - s.y) < m * 0.01) s.tx = s.ty = null;
+        }
+        // the centre never leaves the screen
+        s.x = Math.min(view.x1, Math.max(view.x0, s.x));
+        s.y = Math.min(view.y1, Math.max(view.y0, s.y));
+        s.kick *= Math.exp(-1.5 * dt);
         s.rot += (s.spin + s.kick) * dt;
       }
     }
@@ -275,18 +300,16 @@
       ctx.globalAlpha = 1;
     }
 
-    // tap / click anywhere: push the shapes away from that point
+    // tap / click anywhere: every shape scatters to a new random spot on screen, away from the tap
     addEventListener("pointerdown", e => {
       if (reduce || e.target.closest("a, button")) return;
       const r = canvas.getBoundingClientRect();
       const px = (e.clientX - r.left) / r.width * W, py = (e.clientY - r.top) / r.height * H;
-      const m = Math.min(W, H);
       for (const s of shapes) {
-        const dx = s.x - px, dy = s.y - py;
-        const d = Math.hypot(dx, dy) || 1;
-        const f = Math.exp(-((d / (m * 0.9)) ** 2)) * m * 0.6;    // closer = stronger
-        s.vx += dx / d * f; s.vy += dy / d * f;
-        s.kick += (Math.random() < .5 ? -1 : 1) * f / m * 2;
+        const p = spot(px, py);
+        s.tx = p.x; s.ty = p.y;
+        s.dir = Math.random() * Math.PI * 2;
+        s.kick = (Math.random() < .5 ? -1 : 1) * (1.2 + Math.random() * 1.5);
       }
     });
 
@@ -310,7 +333,7 @@
       rt = setTimeout(() => {
         const oW = W, oH = H;
         size();
-        for (const s of shapes) { s.x *= W / oW; s.y *= H / oH; }
+        for (const s of shapes) { s.x *= W / oW; s.y *= H / oH; s.tx = s.ty = null; }
         draw(performance.now() / 1000);
       }, 120);
     });
